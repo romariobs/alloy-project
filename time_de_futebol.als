@@ -12,17 +12,13 @@ Cliente: Tiago Massoni*/
 
 module timeDeFutebol
 
-//Assinaturas
-
----------
-abstract sig Equipe{}
+--Assinaturas
+one sig Equipe{
+	treino : set Treino
+}
 
 sig JogadorDeLinha extends Equipe{}
-sig Goleiro extends Equipe{}
-
--------------
-
-
+sig Goleiro extends Equipe {}
 
 abstract sig Treino{
 preparadorFisico : one PreparadorFisico
@@ -35,8 +31,6 @@ one sig TreinoGoleiro extends Treino {
 one sig TreinoJogadoresLinha extends Treino {
 	treinador : one Tecnico
 }
-
-
 
 one sig Tecnico {
 	jogadorDeLinha : set JogadorDeLinha
@@ -51,14 +45,38 @@ one sig PreparadorFisico {
 	goleiros : set Goleiro
 }
 
-
-fact sempre {
-
-   all g1: Goleiro, g2| g not in TreinadorGoleiro.goleiros and g not in PreparadorFisico.goleiros implies #((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros) + g) = 3
+--Predicados
+pred tecnicoAddJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
+	tecnico'.jogadorDeLinha = tecnico.jogadordeLinha + j
 }
 
+pred tecnicoRemoveJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
+	tecnico'.jogadorDeLinha = tecnico.jogadordeLinha - j
+}
 
+pred preparadorAddJogador [pf, pf': PreparadorFisico, j: JogadordeLinha] {
+	pf'.jogadorDeLinha = pf.jogadorDeLinha + j
+}
 
+pred preparadorRemoveJogador [pf, pf': PreparadorFisico, j: JogadordeLinha] {
+	pf'.jogadorDeLinha = pf.jogadorDeLinha - j
+}
+
+pred preparadorAddGoleiro [pf, pf': PreparadorFisico, g: Goleiro] {
+	pf'.goleiros = pf.goleiros + g
+}
+
+pred preparadorRemoveGoleiro [pf, pf': PreparadorFisico, g: Goleiro] {
+	pf'.goleiros = pf.goleiros - g
+}
+
+pred treinadorAddGoleiro [tg, tg': TreinadorGoleiro, g: Goleiro] {
+	tg'.goleiros = tg.goleiros + g
+}
+
+pred treinadorRemoveGoleiro [tg, tg': TreinadorGoleiro, g: Goleiro] {
+	tg'.goleiros = tg.goleiros - g
+}
 
 
 --Funcoes
@@ -70,12 +88,23 @@ fun goleirosDoPreparador[pf: PreparadorFisico] : set Goleiro {
   pf.goleiros
 }
 
+fun jogadoresDoPreparador[pf: PreparadorFisico] : set JogadorDeLinha {
+  pf.jogadorDeLinha
+}
 
-//Fatos 
+fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
+  t.jogadorDeLinha
+}
+
+
+--Fatos
+fact sempre {
+//   all g1: Goleiro, g2| g not in TreinadorGoleiro.goleiros and g not in PreparadorFisico.goleiros implies #((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros) + g) = 3
+}
+
 // O treinador de goleiro só pode treinar 2 goleiros por vez
 fact treinadorDeGoleiro {
-   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <=2
-   
+   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <=2   
 }
 
 
@@ -100,9 +129,7 @@ fact goleiroDiferentes {
 
 
 --Asserts
-
-
---Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
+//Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
 assert treinarJogadoresAoMesmoTempo {
    some t: Tecnico, pF: PreparadorFisico|  t.jogadorDeLinha in pF.jogadorDeLinha
 }
@@ -116,5 +143,5 @@ assert treinarJogadoresAoMesmoTempo {
 --check treinarJogadoresAoMesmoTempo for 100
 
 pred show[]{}
-run show for 5
+run tecnicoTemJogador for 10
 	
