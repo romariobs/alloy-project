@@ -32,16 +32,6 @@ one sig TreinoJogadoresLinha extends Treino {
 	treinador : one Tecnico
 }
 
---Se um goleiro não está sendo treinado então ele fica aqui
-one sig GoleiroSemTreino {
-	goleiroSemTreino: set Goleiro
-}
-
---Se um jogador de linha não estiver sem treino então ele é um JogadorSemTreino
-one sig JogadorSemTreino {
-	jogadorSemTreino: set JogadorDeLinha
-}
-
 one sig Tecnico {
 	jogadoresDeLinha : set JogadorDeLinha
 }
@@ -58,37 +48,6 @@ one sig PreparadorFisico {
 --****************************************************----------
 
 --Predicados
-pred tecnicoAddJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
-	tecnico'.jogadoresDeLinha = tecnico.jogadoresDeLinha + j
-}
-
-pred tecnicoRemoveJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
-	tecnico'.jogadoresDeLinha = tecnico.jogadoresDeLinha - j
-}
-
-pred preparadorAddJogador [pf, pf': PreparadorFisico, j: JogadorDeLinha] {
-	pf'.jogadoresDeLinha = pf.jogadoresDeLinha + j
-}
-
-pred preparadorRemoveJogador [pf, pf': PreparadorFisico, j: JogadorDeLinha] {
-	pf'.jogadoresDeLinha = pf.jogadoresDeLinha - j
-}
-
-pred preparadorAddGoleiro [pf, pf': PreparadorFisico, g: Goleiro] {
-	pf'.goleiros = pf.goleiros + g
-}
-
-pred preparadorRemoveGoleiro [pf, pf': PreparadorFisico, g: Goleiro] {
-	pf'.goleiros = pf.goleiros - g
-}
-
-pred treinadorAddGoleiro [tg, tg': TreinadorGoleiro, g: Goleiro] {
-	tg'.goleiros = tg.goleiros + g
-}
-
-pred treinadorRemoveGoleiro [tg, tg': TreinadorGoleiro, g: Goleiro] {
-	tg'.goleiros = tg.goleiros - g
-}
 
 // 
 pred goleiroTreinando[g: Goleiro]{
@@ -115,20 +74,6 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
 
 ---***************************************************************-----
 --Fatos
-
---Maximo de goleiros permitidos é de 3
-fact MaximoDeGoleiro {
-	all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
-	all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
-	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
-}
-
---Maximo de jogadores de linha permitido é de 10
-fact MaximoDeJogadores {
-	all j1: JogadorDeLinha| j1 not in Tecnico.jogadoresDeLinha and j1 not in PreparadorFisico.jogadoresDeLinha=> j1 in JogadorSemTreino.jogadorSemTreino
-	all j2: JogadorDeLinha| j2  in Tecnico.jogadoresDeLinha or j2 in PreparadorFisico.jogadoresDeLinha => j2 not in JogadorSemTreino.jogadorSemTreino
-	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
-}
 
 --TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
 fact goleiroDiferentes {
@@ -158,12 +103,12 @@ fact sobreTecnico {
 
 // O máximo de jogadores de linha deve ser sete
 assert maximoDeGoleiros {
-	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
+	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros )) <= 3
 }
 
 // O máximo de goleiros deve ser 3
 assert maximoDeJogadores {
-	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
+	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha) <= 10
 }
 
 // Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
@@ -179,8 +124,6 @@ assert  treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez {
 // O Treinador de Goleiro não pode treinar o mesmo goleiro do preparador fisico
 assert  treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico {
 	all goleiros : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | (goleiros not in goleirosDoTreinador[tg]) or (goleiros not in goleirosDoPreparador[pf])
-	all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
-	all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
 }
 
 --check maximoDeGoleiros for 50
