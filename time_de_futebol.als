@@ -48,12 +48,23 @@ one sig PreparadorFisico {
 --****************************************************----------
 
 --Predicados
-
-// 
 pred goleiroTreinando[g: Goleiro]{
 	(g in PreparadorFisico.goleiros => g !in TreinadorGoleiro.goleiros)
 }
 
+pred limiteTecnico[t: Tecnico]{
+	#t.jogadoresDeLinha <= 7
+}
+
+pred limitePreparadorFisico[pf: PreparadorFisico]{
+	#pf.jogadoresDeLinha <= 5
+}
+
+pred limiteTreinadorGoleiro[tg: TreinadorGoleiro]{
+	#tg.goleiros <= 2
+}
+
+---*****************************************************---
 
 --Funcoes
 fun goleirosDoTreinador[tg: TreinadorGoleiro] : set Goleiro {
@@ -72,7 +83,7 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
 	t.jogadoresDeLinha
 }
 
----***************************************************************-----
+---***************************************************************---
 --Fatos
 
 --TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
@@ -82,19 +93,39 @@ fact goleiroDiferentes {
 
 // O treinador de goleiro só pode treinar 2 goleiros por vez
 fact treinadorDeGoleiro {
-   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <=2   
+   all tg: TreinadorGoleiro| limiteTreinadorGoleiro[tg] 
 }
 
 //Jogadores podem ser treinados ao mesmo tempo pelo técnico e pelo preparador físico
 //O preparador físico pode treinar até 5 jogadores
 fact preparadorFisico{
-   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in pf.jogadoresDeLinha & t.jogadoresDeLinha)
-   all p: PreparadorFisico| #p.jogadoresDeLinha <= 5
+   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in jogadoresDoPreparador[pf] & jogadoresDoTecnico[t])
+   all pf: PreparadorFisico| limitePreparadorFisico[pf]
 }
 
 //O técnico pode treinar até 7 jogadores, mas não pode treinar os mesmos jogadores
 fact sobreTecnico {
-    all t: Tecnico| #t.jogadoresDeLinha <= 7
+    all t: Tecnico| limiteTecnico[t]
+}
+
+//Limite de goleiros = 3
+fact limiteGoleiros {
+	all tg: TreinadorGoleiro, pf: PreparadorFisico | #(goleirosDoPreparador[pf]  + goleirosDoTreinador[tg]) = 3
+}
+
+//Limite de jogadores = 10
+/*fact limiteJogadores{
+	all t: Tecnico, pf: PreparadorFisico | #(jogadoresDoPreparador[pf] + jogadoresDoTecnico[t]) = 10
+}*/
+
+//Todo jogador está com o tecnico ou com o treinador ou com ambos
+fact todosGoleirosTreinando{
+	all t: Tecnico, pf: PreparadorFisico, j: JogadorDeLinha | (j in jogadoresDoPreparador[pf]) or (j in jogadoresDoTecnico[t])
+}
+
+//Todo goleiro está com o preparador ou com o treinador
+fact todosGoleirosTreinando{
+	all tg: TreinadorGoleiro, pf: PreparadorFisico, g: Goleiro | (g in goleirosDoPreparador[pf]) or (g in goleirosDoTreinador[tg])
 }
 
 ---****************************************************************-----
@@ -126,6 +157,9 @@ assert  treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico {
 	all goleiros : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | (goleiros not in goleirosDoTreinador[tg]) or (goleiros not in goleirosDoPreparador[pf])
 }
 
+---**************************************************************************************---
+
+--Checks
 --check maximoDeGoleiros for 50
 --check maximoDeJogadores for 50
 --check treinarJogadoresAoMesmoTempo for 50
