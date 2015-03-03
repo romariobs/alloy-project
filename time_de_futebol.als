@@ -13,13 +13,13 @@ Cliente: Tiago Massoni*/
 module timeDeFutebol
 
 --Assinaturas
-abstract sig Equipe{
-}
+abstract sig Equipe{}
+
 sig JogadorDeLinha extends Equipe {}
 sig Goleiro extends Equipe{}
 
 abstract sig Treino{
-preparadorFisico : one PreparadorFisico
+	preparadorFisico : one PreparadorFisico
 }
 
 one sig TreinoGoleiro extends Treino {
@@ -141,7 +141,7 @@ fact treinadorDeGoleiro {
 //Jogadores podem ser treinados ao mesmo tempo pelo técnico e pelo preparador físico
 //O preparador físico pode treinar até 5 jogadores
 fact preparadorFisico{
-   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in pf.jogadoresDeLinha and j in t.jogadoresDeLinha)
+   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in pf.jogadoresDeLinha & t.jogadoresDeLinha)
    all p: PreparadorFisico| #p.jogadoresDeLinha <= 5
 }
 
@@ -153,15 +153,39 @@ fact sobreTecnico {
 ---****************************************************************-----
 
 --Asserts
-//Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
-assert treinarJogadoresAoMesmoTempo {
-   some t: Tecnico, pF: PreparadorFisico|  t.jogadoresDeLinha in pF.jogadoresDeLinha
+
+// O máximo de jogadores de linha deve ser sete
+assert maximoDeGoleiros {
+	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
 }
 
+// O máximo de goleiros deve ser 3
+assert maximoDeJogadores {
+	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
+}
 
---check treinamentoDeGoleirosAlternado for 50
---check treinadorDeGoleirosTreinaDoisGoleirosPorVez
---check treinarJogadoresAoMesmoTempo for 100
+// Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
+assert treinarJogadoresAoMesmoTempo {
+   some t: Tecnico, pF: PreparadorFisico, jo : JogadorDeLinha |  (jo in pF.jogadoresDeLinha & t.jogadoresDeLinha)
+}
+
+// O treinador de goleiro só pode treinar até dois goleiros por vez
+assert  treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez {
+   all tg: TreinadorGoleiro| ( #tg.goleiros <= 2 )
+}
+
+// O Treinador de Goleiro não pode treinar o mesmo goleiro do preparador fisico
+assert  treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico {
+	all goleiros : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | (goleiros not in goleirosDoTreinador[tg]) or (goleiros not in goleirosDoPreparador[pf])
+	all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
+	all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
+}
+
+--check maximoDeGoleiros for 50
+--check maximoDeJogadores for 50
+--check treinarJogadoresAoMesmoTempo for 50
+--check treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez for 50
+--check treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico for 50
 
 pred show[]{}
 run show for 10
