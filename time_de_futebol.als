@@ -53,7 +53,7 @@ one sig PreparadorFisico {
 	goleiros : set Goleiro
 }
 
-
+--****************************************************----------
 
 --Predicados
 pred tecnicoAddJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
@@ -111,7 +111,7 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
   t.jogadoresDeLinha
 }
 
-
+---***************************************************************-----
 --Fatos
 
 --Maximo de goleiros permitidos é de 3
@@ -127,7 +127,6 @@ all j1: JogadorDeLinha| j1 not in Tecnico.jogadoresDeLinha and j1 not in Prepara
 all j2: JogadorDeLinha| j2  in Tecnico.jogadoresDeLinha or j2 in PreparadorFisico.jogadoresDeLinha => j2 not in JogadorSemTreino.jogadorSemTreino
 #(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
 }
-
 
 --TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
 fact goleiroDiferentes {
@@ -151,17 +150,13 @@ fact sobreTecnico {
     all t: Tecnico| #t.jogadoresDeLinha <= 7
 }
 
-
-	
+---****************************************************************-----
 
 --Asserts
 //Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
 assert treinarJogadoresAoMesmoTempo {
    some t: Tecnico, pF: PreparadorFisico|  t.jogadoresDeLinha in pF.jogadoresDeLinha
 }
-
-
-
 
 
 --check treinamentoDeGoleirosAlternado for 50
