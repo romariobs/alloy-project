@@ -1,4 +1,4 @@
-/*Tema 9: Estruturação de um time de futebol
+/* Tema 9: Estruturação de um time de futebol
 
 O time de futsal de computação vai representar a UFCG no campeonato regional mas para isso precisa de um
 treinamento especíifico, esse time é composto por 3 goleiros e 10 jogadores de linha, o estafe é composto por um técnico,
@@ -8,7 +8,9 @@ podem ser treinados ao mesmo tempo pelo técnico e pelo preparador físico, o pr
 de linha e o técnico pode treinar 7 jogadores, mas não podem treinar os mesmos jogadores.
 
 Integrantes:Romário Batista, Igor Meira, Alan Cintra, Jailson Campos
-Cliente: Tiago Massoni*/
+Cliente: Tiago Massoni
+
+*/
 
 module timeDeFutebol
 
@@ -32,12 +34,12 @@ one sig TreinoJogadoresLinha extends Treino {
 
 --Se um goleiro não está sendo treinado então ele fica aqui
 one sig GoleiroSemTreino {
-   goleiroSemTreino: set Goleiro
+	goleiroSemTreino: set Goleiro
 }
 
 --Se um jogador de linha não estiver sem treino então ele é um JogadorSemTreino
 one sig JogadorSemTreino {
-   jogadorSemTreino: set JogadorDeLinha
+	jogadorSemTreino: set JogadorDeLinha
 }
 
 one sig Tecnico {
@@ -96,19 +98,19 @@ pred goleiroTreinando[g: Goleiro]{
 
 --Funcoes
 fun goleirosDoTreinador[tg: TreinadorGoleiro] : set Goleiro {
-  tg.goleiros
+	tg.goleiros
 }
 
 fun goleirosDoPreparador[pf: PreparadorFisico] : set Goleiro {
-  pf.goleiros
+	pf.goleiros
 }
 
 fun jogadoresDoPreparador[pf: PreparadorFisico] : set JogadorDeLinha {
-  pf.jogadoresDeLinha
+	pf.jogadoresDeLinha
 }
 
 fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
-  t.jogadoresDeLinha
+	t.jogadoresDeLinha
 }
 
 ---***************************************************************-----
@@ -116,21 +118,21 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
 
 --Maximo de goleiros permitidos é de 3
 fact MaximoDeGoleiro {
-all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
-all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
-#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
+	all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
+	all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
+	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
 }
 
 --Maximo de jogadores de linha permitido é de 10
 fact MaximoDeJogadores {
-all j1: JogadorDeLinha| j1 not in Tecnico.jogadoresDeLinha and j1 not in PreparadorFisico.jogadoresDeLinha=> j1 in JogadorSemTreino.jogadorSemTreino
-all j2: JogadorDeLinha| j2  in Tecnico.jogadoresDeLinha or j2 in PreparadorFisico.jogadoresDeLinha => j2 not in JogadorSemTreino.jogadorSemTreino
-#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
+	all j1: JogadorDeLinha| j1 not in Tecnico.jogadoresDeLinha and j1 not in PreparadorFisico.jogadoresDeLinha=> j1 in JogadorSemTreino.jogadorSemTreino
+	all j2: JogadorDeLinha| j2  in Tecnico.jogadoresDeLinha or j2 in PreparadorFisico.jogadoresDeLinha => j2 not in JogadorSemTreino.jogadorSemTreino
+	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
 }
 
 --TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
 fact goleiroDiferentes {
-  all g: Goleiro| goleiroTreinando[g]
+	all g: Goleiro| goleiroTreinando[g]
 }
 
 // O treinador de goleiro só pode treinar 2 goleiros por vez
@@ -166,12 +168,12 @@ assert maximoDeJogadores {
 
 // Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
 assert treinarJogadoresAoMesmoTempo {
-   some t: Tecnico, pF: PreparadorFisico, jo : JogadorDeLinha |  (jo in pF.jogadoresDeLinha & t.jogadoresDeLinha)
+	some t: Tecnico, pF: PreparadorFisico, jo : JogadorDeLinha |  (jo in pF.jogadoresDeLinha & t.jogadoresDeLinha)
 }
 
 // O treinador de goleiro só pode treinar até dois goleiros por vez
 assert  treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez {
-   all tg: TreinadorGoleiro| ( #tg.goleiros <= 2 )
+	all tg: TreinadorGoleiro| ( #tg.goleiros <= 2 )
 }
 
 // O Treinador de Goleiro não pode treinar o mesmo goleiro do preparador fisico
