@@ -13,10 +13,10 @@ Cliente: Tiago Massoni*/
 module timeDeFutebol
 
 --Assinaturas
-one sig Equipe{
-	treinoGoleiro : one TreinoGoleiro,
-	treinoJogador : one TreinoJogadoresLinha
+abstract sig Equipe{
 }
+sig JogadorDeLinha extends Equipe {}
+sig Goleiro extends Equipe{}
 
 abstract sig Treino{
 preparadorFisico : one PreparadorFisico
@@ -30,8 +30,18 @@ one sig TreinoJogadoresLinha extends Treino {
 	treinador : one Tecnico
 }
 
+--Se um goleiro não está sendo treinado então ele fica aqui
+one sig GoleiroSemTreino {
+   goleiroSemTreino: set Goleiro
+}
+
+--Se um jogador de linha não estiver sem treino então ele é um JogadorSemTreino
+one sig JogadorSemTreino {
+   jogadorSemTreino: set JogadorDeLinha
+}
+
 one sig Tecnico {
-	jogadorDeLinha : set JogadorDeLinha
+	jogadoresDeLinha : set JogadorDeLinha
 }
 
 one sig TreinadorGoleiro {
@@ -39,28 +49,27 @@ one sig TreinadorGoleiro {
 }
 
 one sig PreparadorFisico {
-	jogadorDeLinha : set JogadorDeLinha,
+	jogadoresDeLinha : set JogadorDeLinha,
 	goleiros : set Goleiro
 }
 
-sig JogadorDeLinha {}
-sig Goleiro {}
+
 
 --Predicados
 pred tecnicoAddJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
-	tecnico'.jogadorDeLinha = tecnico.jogadorDeLinha + j
+	tecnico'.jogadoresDeLinha = tecnico.jogadoresDeLinha + j
 }
 
 pred tecnicoRemoveJogador [tecnico, tecnico': Tecnico, j: JogadorDeLinha] {
-	tecnico'.jogadorDeLinha = tecnico.jogadorDeLinha - j
+	tecnico'.jogadoresDeLinha = tecnico.jogadoresDeLinha - j
 }
 
 pred preparadorAddJogador [pf, pf': PreparadorFisico, j: JogadorDeLinha] {
-	pf'.jogadorDeLinha = pf.jogadorDeLinha + j
+	pf'.jogadoresDeLinha = pf.jogadoresDeLinha + j
 }
 
 pred preparadorRemoveJogador [pf, pf': PreparadorFisico, j: JogadorDeLinha] {
-	pf'.jogadorDeLinha = pf.jogadorDeLinha - j
+	pf'.jogadoresDeLinha = pf.jogadoresDeLinha - j
 }
 
 pred preparadorAddGoleiro [pf, pf': PreparadorFisico, g: Goleiro] {
@@ -79,6 +88,11 @@ pred treinadorRemoveGoleiro [tg, tg': TreinadorGoleiro, g: Goleiro] {
 	tg'.goleiros = tg.goleiros - g
 }
 
+// 
+pred goleiroTreinando[g: Goleiro]{
+	(g in PreparadorFisico.goleiros => g !in TreinadorGoleiro.goleiros)
+}
+
 
 --Funcoes
 fun goleirosDoTreinador[tg: TreinadorGoleiro] : set Goleiro {
@@ -90,18 +104,34 @@ fun goleirosDoPreparador[pf: PreparadorFisico] : set Goleiro {
 }
 
 fun jogadoresDoPreparador[pf: PreparadorFisico] : set JogadorDeLinha {
-  pf.jogadorDeLinha
+  pf.jogadoresDeLinha
 }
 
 fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
-  t.jogadorDeLinha
+  t.jogadoresDeLinha
 }
 
 
 --Fatos
-fact goleiros {
-	all goleiros : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | 
-	(goleiros in goleirosDoTreinador[tg]) or (goleiros in goleirosDoPreparador[pf])
+
+--Maximo de goleiros permitidos é de 3
+fact MaximoDeGoleiro {
+all g1: Goleiro| g1 not in TreinadorGoleiro.goleiros and g1 not in PreparadorFisico.goleiros => g1 in GoleiroSemTreino.goleiroSemTreino
+all g2: Goleiro| g2  in TreinadorGoleiro.goleiros or g2 in PreparadorFisico.goleiros => g2 not in GoleiroSemTreino.goleiroSemTreino
+#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros + GoleiroSemTreino.goleiroSemTreino )) <= 3
+}
+
+--Maximo de jogadores de linha permitido é de 10
+fact MaximoDeJogadores {
+all j1: JogadorDeLinha| j1 not in Tecnico.jogadoresDeLinha and j1 not in PreparadorFisico.jogadoresDeLinha=> j1 in JogadorSemTreino.jogadorSemTreino
+all j2: JogadorDeLinha| j2  in Tecnico.jogadoresDeLinha or j2 in PreparadorFisico.jogadoresDeLinha => j2 not in JogadorSemTreino.jogadorSemTreino
+#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha + JogadorSemTreino.jogadorSemTreino ) <= 10
+}
+
+
+--TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
+fact goleiroDiferentes {
+  all g: Goleiro| goleiroTreinando[g]
 }
 
 // O treinador de goleiro só pode treinar 2 goleiros por vez
@@ -112,25 +142,22 @@ fact treinadorDeGoleiro {
 //Jogadores podem ser treinados ao mesmo tempo pelo técnico e pelo preparador físico
 //O preparador físico pode treinar até 5 jogadores
 fact preparadorFisico{
-   some pf : PreparadorFisico, t : Tecnico | (pf.jogadorDeLinha = t.jogadorDeLinha)
-   all p: PreparadorFisico| #p.jogadorDeLinha <= 5
+   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in pf.jogadoresDeLinha and j in t.jogadoresDeLinha)
+   all p: PreparadorFisico| #p.jogadoresDeLinha <= 5
 }
 
 //O técnico pode treinar até 7 jogadores, mas não pode treinar os mesmos jogadores
 fact sobreTecnico {
-    all t: Tecnico| #t.jogadorDeLinha <= 7
+    all t: Tecnico| #t.jogadoresDeLinha <= 7
 }
 
---TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
-fact goleiroDiferentes {
-  all g: Goleiro| g not in TreinadorGoleiro.goleiros or g not in PreparadorFisico.goleiros
-}
 
+	
 
 --Asserts
 //Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
 assert treinarJogadoresAoMesmoTempo {
-   some t: Tecnico, pF: PreparadorFisico|  t.jogadorDeLinha in pF.jogadorDeLinha
+   some t: Tecnico, pF: PreparadorFisico|  t.jogadoresDeLinha in pF.jogadoresDeLinha
 }
 
 
