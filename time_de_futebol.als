@@ -52,7 +52,13 @@ sig Goleiro{}
 
 --Predicados
 pred goleiroTreinando[g: Goleiro]{
-	(g in PreparadorFisico.goleiros => g !in TreinadorGoleiro.goleiros)
+//Nunca o treinamento do goleiro ocorre ao mesmo tempo entre Preparador físico e treinador de goleiro
+	(g in PreparadorFisico.goleiros => #TreinadorGoleiro.goleiros=0) or (g in TreinadorGoleiro.goleiros => #PreparadorFisico.goleiros=0)
+}
+
+pred jogadorTreinando[j: JogadorDeLinha]{
+//Os dois podem treinar juntos, mas nunca o mesmo jogador
+   (j in PreparadorFisico.jogadoresDeLinha => j !in Tecnico.jogadoresDeLinha) or (j in  Tecnico.jogadoresDeLinha => j !in PreparadorFisico.jogadoresDeLinha)
 }
 
 pred limiteTecnico[t: Tecnico]{
@@ -105,14 +111,15 @@ fact preparadorFisico{
    all pf: PreparadorFisico| limitePreparadorFisico[pf]
 }
 
-//O técnico pode treinar até 7 jogadores, mas não pode treinar os mesmos jogadores
+//O técnico pode treinar até 7 jogadores, mas não pode treinar os mesmos jogadores do preparador físico
 fact sobreTecnico {
     all t: Tecnico| limiteTecnico[t]
+    some j: JogadorDeLinha| jogadorTreinando[j]
 }
 
 //Limite de goleiros = 3
 fact limiteGoleiros {
-	some tg: TreinadorGoleiro, pf: PreparadorFisico | #(pf.goleiros+tg.goleiros) <= 3
+	all tg: TreinadorGoleiro, pf: PreparadorFisico | #(pf.goleiros+tg.goleiros) <= 3
 }
 
 //Limite de jogadores = 10
@@ -121,8 +128,8 @@ fact limiteJogadores{
 }
 
 //Todo jogador está com o tecnico ou com o treinador ou com ambos
-fact todosGoleirosTreinando{
-	all t: Tecnico, pf: PreparadorFisico, j: JogadorDeLinha | (j in jogadoresDoPreparador[pf]) or (j in jogadoresDoTecnico[t])
+fact todosJogadorTreinando{
+	some j: JogadorDeLinha | jogadorTreinando[j]
 }
 
 //Todo goleiro está com o preparador ou com o treinador
