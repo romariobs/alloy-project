@@ -15,10 +15,10 @@ Cliente: Tiago Massoni
 module timeDeFutebol
 
 --Assinaturas
-abstract sig Equipe{}
-
-sig JogadorDeLinha extends Equipe {}
-sig Goleiro extends Equipe{}
+one sig Equipe{
+	treinogoleiro : one TreinoGoleiro,
+	treinojogador : one TreinoJogadoresLinha
+}
 
 abstract sig Treino{
 	preparadorFisico : one PreparadorFisico
@@ -44,6 +44,9 @@ one sig PreparadorFisico {
 	jogadoresDeLinha : set JogadorDeLinha,
 	goleiros : set Goleiro
 }
+
+sig JogadorDeLinha{}
+sig Goleiro{}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -85,8 +88,7 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 --Fatos
-
---TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
+//TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
 fact goleiroDiferentes {
 	all g: Goleiro| goleiroTreinando[g]
 }
