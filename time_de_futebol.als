@@ -45,7 +45,7 @@ one sig PreparadorFisico {
 	goleiros : set Goleiro
 }
 
---****************************************************----------
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 --Predicados
 pred goleiroTreinando[g: Goleiro]{
@@ -64,7 +64,7 @@ pred limiteTreinadorGoleiro[tg: TreinadorGoleiro]{
 	#tg.goleiros <= 2
 }
 
----*****************************************************---
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 --Funcoes
 fun goleirosDoTreinador[tg: TreinadorGoleiro] : set Goleiro {
@@ -83,7 +83,7 @@ fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
 	t.jogadoresDeLinha
 }
 
----***************************************************************---
+//////////////////////////////////////////////////////////////////////////////////////////////////
 --Fatos
 
 --TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
@@ -110,13 +110,13 @@ fact sobreTecnico {
 
 //Limite de goleiros = 3
 fact limiteGoleiros {
-	all tg: TreinadorGoleiro, pf: PreparadorFisico | #(goleirosDoPreparador[pf]  + goleirosDoTreinador[tg]) = 3
+	some tg: TreinadorGoleiro, pf: PreparadorFisico | #(pf.goleiros+tg.goleiros) <= 3
 }
 
 //Limite de jogadores = 10
-/*fact limiteJogadores{
-	all t: Tecnico, pf: PreparadorFisico | #(jogadoresDoPreparador[pf] + jogadoresDoTecnico[t]) = 10
-}*/
+fact limiteJogadores{
+	some t: Tecnico, pf: PreparadorFisico, j: JogadorDeLinha | j !in (jogadoresDoPreparador[pf] + jogadoresDoTecnico[t]) => #(jogadoresDoPreparador[pf] + jogadoresDoTecnico[t]) <= 10
+}
 
 //Todo jogador está com o tecnico ou com o treinador ou com ambos
 fact todosGoleirosTreinando{
@@ -125,10 +125,11 @@ fact todosGoleirosTreinando{
 
 //Todo goleiro está com o preparador ou com o treinador
 fact todosGoleirosTreinando{
-	all tg: TreinadorGoleiro, pf: PreparadorFisico, g: Goleiro | (g in goleirosDoPreparador[pf]) or (g in goleirosDoTreinador[tg])
+	some tg: TreinadorGoleiro, pf: PreparadorFisico, g: Goleiro | (g in goleirosDoPreparador[pf]) => (g !in goleirosDoTreinador[tg])
+    some tg: TreinadorGoleiro, pf: PreparadorFisico, g: Goleiro | (g in goleirosDoTreinador[tg]) => (g !in goleirosDoPreparador[pf])
 }
 
----****************************************************************-----
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 --Asserts
 
@@ -157,7 +158,7 @@ assert  treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico {
 	all goleiros : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | (goleiros not in goleirosDoTreinador[tg]) or (goleiros not in goleirosDoPreparador[pf])
 }
 
----**************************************************************************************---
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 --Checks
 --check maximoDeGoleiros for 50
