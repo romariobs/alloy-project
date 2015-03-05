@@ -16,8 +16,8 @@ module timeDeFutebol
 
 --Assinaturas
 one sig Equipe{
-	treinogoleiro : one TreinoGoleiro,
-	treinojogador : one TreinoJogadoresLinha
+	treinoGoleiro : one TreinoGoleiro,
+	treinoJogador : one TreinoJogadoresLinha
 }
 
 abstract sig Treino{
@@ -25,153 +25,164 @@ abstract sig Treino{
 }
 
 one sig TreinoGoleiro extends Treino {
-	treinadorgoleiro : one TreinadorGoleiro
+	treinadorGoleiro : one TreinadorGoleiro
 }
 
 one sig TreinoJogadoresLinha extends Treino {
-	treinador : one Tecnico
+	tecnico : one Tecnico
 }
 
 one sig Tecnico {
-	jogadoresT : set JogadorDeLinha
+	jogadoresDeLinha : set JogadorDeLinha
 }
 
 one sig TreinadorGoleiro {
-	goleirosTg : set Goleiro
+	goleiros : set Goleiro
 }
 
 one sig PreparadorFisico {
-	jogadoresPf : set JogadorDeLinha,
-	goleirosPf : set Goleiro
-}
-
-one sig Chuveiro {
-   jogadoresC: set JogadorDeLinha,
-   goleirosC: set Goleiro
+	jogadoresDeLinha : set JogadorDeLinha,
+	goleiros : set Goleiro
 }
 
 sig JogadorDeLinha{}
 sig Goleiro{}
 
-////////////////////////////////////////////.....FUNÇÕES....//////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
-fun goleirosNoChuveiro[c: Chuveiro]: set Goleiro {
-   c.goleirosC
+--Predicados
+pred goleiroTreinando[g: Goleiro]{
+	(g in PreparadorFisico.goleiros => g not in TreinadorGoleiro.goleiros)
 }
 
-fun goleirosDoTreinador[tr: TreinadorGoleiro]: set Goleiro {
-   tr.goleirosTg
+//pred goleiroDescansando[g: Goleiro]{
+	//(g not in PreparadorFisico.goleiros and g not in TreinadorGoleiro.goleiros => g in Descanso.goleiros )
+//}
+
+pred limiteTecnico[t: Tecnico]{
+	#t.jogadoresDeLinha <= 7
 }
 
-fun goleirosDoPreparador[p: PreparadorFisico] : set Goleiro {
-   p.goleirosPf
+pred limitePreparadorFisico[pf: PreparadorFisico]{
+	#pf.jogadoresDeLinha <= 5
 }
 
-fun jogadoresNoChuveiro[c: Chuveiro] : set JogadorDeLinha {
-   c.jogadoresC
+pred limiteTreinadorGoleiro[tg: TreinadorGoleiro]{
+	#tg.goleiros <= 2
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+--Funcoes
+fun goleirosDoTreinador[tg: TreinadorGoleiro] : set Goleiro {
+	tg.goleiros
+}
+
+fun goleirosDoPreparador[pf: PreparadorFisico] : set Goleiro {
+	pf.goleiros
+}
+
+fun jogadoresDoPreparador[pf: PreparadorFisico] : set JogadorDeLinha {
+	pf.jogadoresDeLinha
 }
 
 fun jogadoresDoTecnico[t: Tecnico] : set JogadorDeLinha {
-   t.jogadoresT
+	t.jogadoresDeLinha
 }
 
-fun jogadoresDoPreparador[p: PreparadorFisico] : set JogadorDeLinha {
-   p.jogadoresPf
+//////////////////////////////////////////////////////////////////////////////////////////////////
+--Fatos
+//TreinadorGoleiro não pode treinar o mesmo goleiro do preparador fisico
+fact goleiroDiferentes {
+	all g: Goleiro| goleiroTreinando[g]
 }
 
-fun todosOsGoleiros[tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro] : set Goleiro {
-  goleirosDoTreinador[tg] + goleirosDoPreparador[pf] + goleirosNoChuveiro[c]
+// O treinador de goleiro só pode treinar 2 goleiros por vez
+fact treinadorDeGoleiro {
+   all tg: TreinadorGoleiro | #(tg.goleiros) <= 2
 }
 
-fun todosOsJogadores[pf: PreparadorFisico, t: Tecnico, c: Chuveiro] : set JogadorDeLinha {
-  jogadoresDoPreparador[pf] +  jogadoresDoTecnico[t] + jogadoresNoChuveiro[c]
+//Jogadores podem ser treinados ao mesmo tempo pelo técnico e pelo preparador físico
+//O preparador físico pode treinar até 5 jogadores
+fact preparadorFisico{
+   some pf : PreparadorFisico, t : Tecnico, j: JogadorDeLinha | (j in jogadoresDoPreparador[pf] & jogadoresDoTecnico[t])
+   all pf: PreparadorFisico| limitePreparadorFisico[pf]
 }
 
-///////////////////////////////////////////////.....FATOS......///////////////////////////////////////////////
-
-fact sobreTreinoGoleiro {
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoTreinador[tg] => (#goleirosDoPreparador[pf] = 0)
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoPreparador[pf] => (#goleirosDoTreinador[tg]= 0)
-
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
-
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
-
-   all tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| #todosOsGoleiros[tg, pf, c] = 3
-
-   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <= 2
+//O técnico pode treinar até 7 jogadores, mas não pode treinar os mesmos jogadores
+fact sobreTecnico {
+    all t: Tecnico| limiteTecnico[t]
 }
 
-fact sobreTreinoJogador {
-  all pf: PreparadorFisico| #jogadoresDoPreparador[pf] <= 5
-  all t: Tecnico| #jogadoresDoTecnico[t] <= 7
-  all pf: PreparadorFisico, t: Tecnico, c: Chuveiro| #todosOsJogadores[pf, t, c] = 10
-  
-  all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| jogadorTreinaComPreparador[j, pf] => !jogadorTreinaComTecnico[j, t]
-  all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| jogadorTreinaComTecnico[j, t] => !jogadorTreinaComPreparador[j, pf]
-  all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| jogadorSemTreino[j, pf, t] => jogadorNoChuveiro[j, c]
-  all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| !jogadorSemTreino[j, pf, t] => !jogadorNoChuveiro[j, c]
-
+//Limite de goleiros = 3
+fact limiteGoleiros {
+	all tg: TreinadorGoleiro, pf: PreparadorFisico | #(goleirosDoTreinador[tg] + goleirosDoPreparador[pf]) <= 3
 }
 
-////////////////////////////////////////////.....PREDICADOS....//////////////////////////////////////////////
-
-pred jogadorSemTreino[j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico] {
-  j !in jogadoresDoTecnico[t] and j !in jogadoresDoPreparador[pf]
+//Limite de jogadores = 10
+fact limiteJogadores{
+	all t: Tecnico, pf: PreparadorFisico | #(jogadoresDoPreparador[pf] + jogadoresDoTecnico[t]) <= 12
 }
 
-pred goleiroSemTreino[g: Goleiro, pf: PreparadorFisico, tg: TreinadorGoleiro] {
-  (g !in goleirosDoPreparador[pf]) and (g !in goleirosDoTreinador[tg])
+//Todo jogador está com o tecnico ou com o treinador ou com ambos
+fact todosJogadoresTreinando{
+	all t: Tecnico, pf: PreparadorFisico, j: JogadorDeLinha | (j in jogadoresDoPreparador[pf]) or (j in jogadoresDoTecnico[t])
 }
 
-pred jogadorTreinaComPreparador[j: JogadorDeLinha, pf: PreparadorFisico] {
-  j in jogadoresDoPreparador[pf]
+//Todo goleiro está com o preparador ou com o treinador
+fact todosGoleirosTreinando{
+	all  tg: TreinadorGoleiro, pf: PreparadorFisico, g: Goleiro | (g in goleirosDoPreparador[pf]) or (g in goleirosDoTreinador[tg])
 }
 
-pred jogadorTreinaComTecnico[j: JogadorDeLinha, t: Tecnico] {
-  j in jogadoresDoTecnico[t]
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+--Asserts
+
+// O máximo de goleiros deve ser 3
+assert maximoDeGoleiros {
+	#((TreinadorGoleiro.goleiros + PreparadorFisico.goleiros )) <= 3
 }
 
-pred jogadorNoChuveiro[j: JogadorDeLinha, c: Chuveiro] {
-  j in jogadoresNoChuveiro[c]
+// O máximo de jogadores deve ser 10
+assert maximoDeJogadores {
+	#(Tecnico.jogadoresDeLinha + PreparadorFisico.jogadoresDeLinha) <= 10
 }
 
-pred goleiroNoChuveiro[g: Goleiro, c: Chuveiro] {
-  g in goleirosNoChuveiro[c]
+// Jogadores podem ser treinados ao mesmo tempo pelo tecnico e pelo preparador fisico
+assert treinarJogadoresAoMesmoTempo {
+	some t: Tecnico, pf: PreparadorFisico, j : JogadorDeLinha |  (j in pf.jogadoresDeLinha & t.jogadoresDeLinha)
 }
 
-pred goleiroTreinaComPreparador[g: Goleiro, pf: PreparadorFisico] {
-  g in goleirosDoPreparador[pf]
+// O preparador fisico só pode treinar até 5 jogadores por vez
+assert  preparadorFisicoDeveTreinarAteCincoJogadoresPorVez {
+	all pf: preparadorFisico | ( #pf.jogadoresDeLinha <= 5 )
 }
 
-pred goleiroTreinaComTreinador[g: Goleiro, tg: TreinadorGoleiro] {
-  g in goleirosDoTreinador[tg]
+// O tecnico só pode treinar até 7 jogadores por vez
+assert  tecnicoDeveTreinarAteSeteJogadoresPorVez {
+	all t: Tecnico | ( #t.jogadoresDeLinha <= 7 )
 }
 
-////////////////////////////////////////////......ASSERTS....//////////////////////////////////////////////////
-
-assert apenasUmaEquipe {
-   one Equipe
+// O treinador de goleiro só pode treinar até dois goleiros por vez
+assert  treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez {
+	all tg: TreinadorGoleiro | ( #tg.goleiros <= 2 )
 }
 
-assert todoGoleiro {
-  all g1, g2: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico|(g1 != g2) and goleiroTreinaComTreinador[g1, tg] => (!goleiroTreinaComPreparador[g2, pf])
-  all g1, g2: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico|(g1 != g2) and goleiroTreinaComPreparador[g1, pf] => (!goleiroTreinaComTreinador[g2, tg])
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComTreinador[g, tg] => (#goleirosDoPreparador[pf]  = 0)
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComPreparador[g, pf]  => (#goleirosDoTreinador[tg] = 0)
-  lone t: TreinadorGoleiro| #goleirosDoTreinador[t] = 2
+// O Treinador de Goleiro não pode treinar o mesmo goleiro do preparador fisico
+assert  treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico {
+	all g : Goleiro, tg : TreinadorGoleiro, pf : PreparadorFisico | ! ( g in goleirosDoTreinador[tg] and g in goleirosDoPreparador[pf] )
 }
 
-assert todoJogador {
-  lone t: Tecnico| #jogadoresDoTecnico[t] = 7
-  lone pf: PreparadorFisico| #jogadoresDoPreparador[pf] = 5
-  lone c: Chuveiro| #jogadoresNoChuveiro[c] = 10
-  some j1, j2: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| j1 != j2 => jogadorTreinaComPreparador[j1, pf] and jogadorTreinaComTecnico[j2, t]
-}
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
-//check apenasUmaEquipe for 200
-//check todoGoleiro for 200
-//check todoJogador for 200
+--Checks
+--check maximoDeGoleiros for 200
+--check maximoDeJogadores for 200
+--check treinarJogadoresAoMesmoTempo for 500
+check preparadorFisicoDeveTreinarAteCincoJogadoresPorVez for 200
+--check tecnicoDeveTreinarAteSeteJogadoresPorVez for 50 // ok
+--check treinadorDeGoleiroDeveTreinarAteDoisGoleirosPorVez for 100 // ok
+--check treinadorDeGoleiroNaoDeveTreinarOMesmoGoleiroDoTreinadorFisico for 500 // ok
 
 pred show[]{}
 run show for 10
