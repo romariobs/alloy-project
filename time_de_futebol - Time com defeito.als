@@ -243,13 +243,15 @@ pred removeJogadorPF[pf:PreparadorFisico, j:JogadorDeLinha, t, t':Time] {
 
 // se remover 'and #pf.goleirosPf <=2 and #tg.goleirosTg = 0' o programa consegue achar uma instância
 pred addGoleiroPF[pf:PreparadorFisico, tg:TreinadorGoleiro, g:Goleiro, t, t':Time] {
-	g !in (pf.goleirosPf).t and #pf.goleirosPf <=2 and #tg.goleirosTg = 0
+	//g !in (pf.goleirosPf).t and #pf.goleirosPf <= 2 and #tg.goleirosTg = 0
+	g !in (pf.goleirosPf).t and g !in (tg.goleirosTg).t
 	(pf.goleirosPf).t' = (pf.goleirosPf).t + g
 }
 
 // mesmo caso do predicado acima
 pred addGoleiroTG[tg:TreinadorGoleiro, pf:PreparadorFisico, g:Goleiro, t, t':Time] {
-	g !in (tg.goleirosTg).t and #tg.goleirosTg <=1 and #pf.goleirosPf = 0
+	//g !in (tg.goleirosTg).t and #tg.goleirosTg <=1 and #pf.goleirosPf = 0
+	g !in (tg.goleirosTg).t and g !in (pf.goleirosPf).t
 	(tg.goleirosTg).t' = (tg.goleirosTg).t + g
 }
 
@@ -296,9 +298,9 @@ assert todoJogador {
   all c: Chuveiro, t:Time | #jogadoresNoChuveiro[c, t] <= 10
 }
 
-//check apenasUm for 200
-//check todoGoleiro for 200
-//check todoJogador for 200
+//check apenasUm for 30
+//check todoGoleiro for 30
+//check todoJogador for 30
 
 pred show[]{}
 run show for 10
