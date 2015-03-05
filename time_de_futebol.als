@@ -113,6 +113,7 @@ fact sobreTreinoJogador {
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| jogadorTreinaComTecnico[j, t] => !jogadorTreinaComPreparador[j, pf]
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| jogadorSemTreino[j, pf, t] => jogadorNoChuveiro[j, c]
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| !jogadorSemTreino[j, pf, t] => !jogadorNoChuveiro[j, c]
+  all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| jogadorNoChuveiro[j, c] => jogadorSemTreino[j, pf, t]
 
 }
 
@@ -173,7 +174,7 @@ assert todoJogador {
 }
 
 //check apenasUmaEquipe for 200
-check todoGoleiro for 200
+//check todoGoleiro for 200
 //check todoJogador for 200
 
 pred show[]{}
