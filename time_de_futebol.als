@@ -90,29 +90,52 @@ fun todosOsJogadores[pf: PreparadorFisico, t: Tecnico, c: Chuveiro] : set Jogado
 ///////////////////////////////////////////////.....FATOS......///////////////////////////////////////////////
 
 fact sobreTreinoGoleiro {
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoTreinador[tg] => (#goleirosDoPreparador[pf] = 0)
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoPreparador[pf] => (#goleirosDoTreinador[tg]= 0)
 
+  // se um goleiro está com o treinador de goleiros nao deve estar com o preparador fisico
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoTreinador[tg] => g not in goleirosDoPreparador[pf]
+
+  // se um goleiro está com o preparador fisico nao deve estar com o treinador de goleiros
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoPreparador[pf] => g not in goleirosDoTreinador[tg]
+
+  // goleiro sem treino é goleiro no chuveiro
   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
 
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
-
+  // goleiro no chuveiro é goleiro sem treino
   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroNoChuveiro[g, c] => goleiroSemTreino[g, pf, tg]
 
+  // se o goleiro está treinando não pode estar no chuveiro
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => !goleiroNoChuveiro[g, c]
+
+  // maximo de goleiros = 3
   all tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| #todosOsGoleiros[tg, pf, c] = 3
 
+  // maximo de goleiros que o treinador de goleiros pode treinar = 2 
   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <= 2
+
 }
 
 fact sobreTreinoJogador {
+
+  // maximo de jogadores que o preparador fisico pode treinar = 5 
   all pf: PreparadorFisico| #jogadoresDoPreparador[pf] <= 5
+
+  // maximo de jogadores que o tecnico pode treinar = 7 
   all t: Tecnico| #jogadoresDoTecnico[t] <= 7
+
+  // maximo de jogadores do time = 10
   all pf: PreparadorFisico, t: Tecnico, c: Chuveiro| #todosOsJogadores[pf, t, c] = 10
-  
+
+  // jogador que treina com tecnico não treina com preparador físico e vice-versa
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| jogadorTreinaComPreparador[j, pf] => !jogadorTreinaComTecnico[j, t]
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| jogadorTreinaComTecnico[j, t] => !jogadorTreinaComPreparador[j, pf]
+  
+  // jogador sem treino é jogador no chuveiro
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| jogadorSemTreino[j, pf, t] => jogadorNoChuveiro[j, c]
+
+  // se o jogador está treinando não pode estar no chuveiro
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| !jogadorSemTreino[j, pf, t] => !jogadorNoChuveiro[j, c]
+
+  // jogador no chuveiro é jogador sem treino
   all j: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico, c: Chuveiro| jogadorNoChuveiro[j, c] => jogadorSemTreino[j, pf, t]
 
 }
@@ -153,27 +176,35 @@ pred goleiroTreinaComTreinador[g: Goleiro, tg: TreinadorGoleiro] {
 
 ////////////////////////////////////////////......ASSERTS....//////////////////////////////////////////////////
 
-assert apenasUmaEquipe {
-   one Equipe
+assert apenasUm {
+  one Equipe
+  one TreinadorGoleiro
+  one PreparadorFisico
+  one Tecnico
 }
 
 assert todoGoleiro {
-  all g1, g2: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico|(g1 != g2) and goleiroTreinaComTreinador[g1, tg] => (!goleiroTreinaComPreparador[g2, pf])
-  all g1, g2: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico|(g1 != g2) and goleiroTreinaComPreparador[g1, pf] => (!goleiroTreinaComTreinador[g2, tg])
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComTreinador[g, tg] => (#goleirosDoPreparador[pf]  = 0)
-  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComPreparador[g, pf]  => (#goleirosDoTreinador[tg] = 0)
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico | goleiroTreinaComTreinador[g, tg] => (!goleiroTreinaComPreparador[g, pf])
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico | goleiroTreinaComPreparador[g, pf] => ( !goleiroTreinaComTreinador[g, tg])
   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroNoChuveiro[g, c] => goleiroSemTreino[g, pf, tg]
-  lone t: TreinadorGoleiro| #goleirosDoTreinador[t] = 2
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => !goleiroNoChuveiro[g, c]
+  all t: TreinadorGoleiro| #goleirosDoTreinador[t] <= 2
+  all tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro | #todosOsGoleiros[tg, pf, c] = 3
 }
 
 assert todoJogador {
-  lone t: Tecnico| #jogadoresDoTecnico[t] = 7
-  lone pf: PreparadorFisico| #jogadoresDoPreparador[pf] = 5
-  lone c: Chuveiro| #jogadoresNoChuveiro[c] = 10
-  some j1, j2: JogadorDeLinha, pf: PreparadorFisico, t: Tecnico| j1 != j2 => jogadorTreinaComPreparador[j1, pf] and jogadorTreinaComTecnico[j2, t]
+  all j: JogadorDeLinha, t: Tecnico, pf: PreparadorFisico | jogadorTreinaComPreparador[j, pf]  => (!jogadorTreinaComTecnico[j, t])
+  all j: JogadorDeLinha, t: Tecnico, pf: PreparadorFisico | jogadorTreinaComTecnico[j, t] => ( !jogadorTreinaComPreparador[j, pf])
+  all j: JogadorDeLinha, t: Tecnico, pf: PreparadorFisico, c: Chuveiro| jogadorNoChuveiro[j, c] => jogadorSemTreino[j, pf, t]
+  all j: JogadorDeLinha, t: Tecnico, pf: PreparadorFisico, c: Chuveiro| jogadorSemTreino[j, pf, t] => jogadorNoChuveiro[j, c]
+  all j: JogadorDeLinha, t: Tecnico, pf: PreparadorFisico, c: Chuveiro| !jogadorSemTreino[j, pf, t] => !jogadorNoChuveiro[j, c]
+  all t: Tecnico| #jogadoresDoTecnico[t] <= 7
+  all pf: PreparadorFisico| #jogadoresDoPreparador[pf] <= 5
+  all c: Chuveiro| #jogadoresNoChuveiro[c] <= 10
 }
 
-//check apenasUmaEquipe for 200
+//check apenasUm for 200
 //check todoGoleiro for 200
 //check todoJogador for 200
 
