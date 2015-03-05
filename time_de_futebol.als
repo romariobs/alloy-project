@@ -90,16 +90,18 @@ fun todosOsJogadores[pf: PreparadorFisico, t: Tecnico, c: Chuveiro] : set Jogado
 ///////////////////////////////////////////////.....FATOS......///////////////////////////////////////////////
 
 fact sobreTreinoGoleiro {
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoTreinador[tg] => (#goleirosDoPreparador[pf] = 0)
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoPreparador[pf] => (#goleirosDoTreinador[tg]= 0)
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoTreinador[tg] => (#goleirosDoPreparador[pf] = 0)
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| g in goleirosDoPreparador[pf] => (#goleirosDoTreinador[tg]= 0)
 
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
 
-   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| !goleiroSemTreino[g, pf, tg] => goleiroNoChuveiro[g, c]
 
-   all tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| #todosOsGoleiros[tg, pf, c] = 3
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroNoChuveiro[g, c] => goleiroSemTreino[g, pf, tg]
 
-   all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <= 2
+  all tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| #todosOsGoleiros[tg, pf, c] = 3
+
+  all tg: TreinadorGoleiro| #goleirosDoTreinador[tg] <= 2
 }
 
 fact sobreTreinoJogador {
@@ -159,6 +161,7 @@ assert todoGoleiro {
   all g1, g2: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico|(g1 != g2) and goleiroTreinaComPreparador[g1, pf] => (!goleiroTreinaComTreinador[g2, tg])
   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComTreinador[g, tg] => (#goleirosDoPreparador[pf]  = 0)
   all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico| goleiroTreinaComPreparador[g, pf]  => (#goleirosDoTreinador[tg] = 0)
+  all g: Goleiro, tg: TreinadorGoleiro, pf: PreparadorFisico, c: Chuveiro| goleiroNoChuveiro[g, c] => goleiroSemTreino[g, pf, tg]
   lone t: TreinadorGoleiro| #goleirosDoTreinador[t] = 2
 }
 
@@ -170,7 +173,7 @@ assert todoJogador {
 }
 
 //check apenasUmaEquipe for 200
-//check todoGoleiro for 200
+check todoGoleiro for 200
 //check todoJogador for 200
 
 pred show[]{}
