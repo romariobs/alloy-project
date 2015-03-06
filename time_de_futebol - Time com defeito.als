@@ -25,15 +25,15 @@ one sig Equipe{
 }
 
 abstract sig Treino{
-	preparadorFisico : one PreparadorFisico
+	preparadorFisico : PreparadorFisico -> Time
 }
 
 one sig TreinoGoleiro extends Treino {
-	treinadorgoleiro : one TreinadorGoleiro
+	treinadorgoleiro : TreinadorGoleiro -> Time
 }
 
 one sig TreinoJogadoresLinha extends Treino {
-	treinador : one Tecnico
+	treinador : Tecnico -> Time
 }
 
 one sig Tecnico {
@@ -145,7 +145,7 @@ fact sobreTreinoJogador {
 }
 
 fact traces {
-	initT [first]
+	initTJ [first]
 	all pre: Time-last | let pos = pre.next |
 		some tc: Tecnico, j: JogadorDeLinha |
 			addJogadorT[tc,j,pre,pos] or
@@ -163,11 +163,29 @@ fact traces {
 			addGoleiroPF[pf,tg,g,pre,pos] or
 			removeGoleiroPF[pf,g,pre,pos]
 
-	initTG [first]
+	initTGG [first]
 	all pre: Time-last | let pos = pre.next |
 		some tg:TreinadorGoleiro, pf:PreparadorFisico, g: Goleiro |
 			addGoleiroTG[tg,pf,g,pre,pos] or
 			removeGoleiroTG[tg,g,pre,pos]
+
+	initT [first]
+	all pre: Time-last | let pos = pre.next |
+		some tj:TreinoJogadoresLinha, tc:Tecnico |
+			addTecnico[tj,tc,pre,pos] or
+			removeTecnico[tj,tc,pre,pos]
+
+	initPF [first]
+	all pre: Time-last | let pos = pre.next |
+		some tr:Treino, pf:PreparadorFisico |
+			addPreparadorFisico[tr,pf,pre,pos] or
+			removePreparadorFisico[tr,pf,pre,pos]
+
+	initTG [first]
+	all pre: Time-last | let pos = pre.next |
+		some tg:TreinoGoleiro, trg:TreinadorGoleiro |
+			addTreinadorGoleiro[tg,trg,pre,pos] or
+			removeTreinadorGoleiro[tg,trg,pre,pos]
 }
 
 ////////////////////////////////////////////.....PREDICADOS....//////////////////////////////////////////////
@@ -204,7 +222,19 @@ pred goleiroTreinaComTreinador[g: Goleiro, tg: TreinadorGoleiro, t:Time] {
   g in goleirosDoTreinador[tg, t]
 }
 
-pred initT [t: Time] {
+pred initT [t:Time] {
+	one (TreinoJogadoresLinha.treinador).t
+}
+
+pred initPF [t:Time] {
+	one (Treino.preparadorFisico).t
+}
+
+pred initTG [t:Time] {
+	one (TreinoGoleiro.treinadorgoleiro).t
+}
+
+pred initTJ [t: Time] {
 	no (Tecnico.jogadoresT).t
 }
 
@@ -216,7 +246,7 @@ pred initPFG [t: Time] {
 	no (PreparadorFisico.goleirosPf).t
 }
 
-pred initTG [t: Time] {
+pred initTGG [t: Time] {
 	no (TreinadorGoleiro.goleirosTg).t
 }
 
@@ -241,15 +271,13 @@ pred removeJogadorPF[pf:PreparadorFisico, j:JogadorDeLinha, t, t':Time] {
 	(pf.jogadoresPf).t' = (pf.jogadoresPf).t - j
 }
 
-// se remover 'and #pf.goleirosPf <=2 and #tg.goleirosTg = 0' o programa consegue achar uma instância
 pred addGoleiroPF[pf:PreparadorFisico, tg:TreinadorGoleiro, g:Goleiro, t, t':Time] {
-	g !in (pf.goleirosPf).t and #pf.goleirosPf <=2 and #tg.goleirosTg = 0
+	g !in (pf.goleirosPf).t
 	(pf.goleirosPf).t' = (pf.goleirosPf).t + g
 }
 
-// mesmo caso do predicado acima
 pred addGoleiroTG[tg:TreinadorGoleiro, pf:PreparadorFisico, g:Goleiro, t, t':Time] {
-	g !in (tg.goleirosTg).t and #tg.goleirosTg <=1 and #pf.goleirosPf = 0
+	g !in (tg.goleirosTg).t
 	(tg.goleirosTg).t' = (tg.goleirosTg).t + g
 }
 
@@ -263,6 +291,37 @@ pred removeGoleiroTG[tg:TreinadorGoleiro, g:Goleiro, t, t':Time] {
 	g in (tg.goleirosTg).t
 	(tg.goleirosTg).t' = (tg.goleirosTg).t - g
 }
+
+pred addTecnico[tj:TreinoJogadoresLinha, tc:Tecnico, t, t':Time] {
+	tc !in (tj.treinador).t
+	(tj.treinador).t' = (tj.treinador).t + tc
+}
+
+pred removeTecnico[tj:TreinoJogadoresLinha, tc:Tecnico, t, t':Time] {
+	tc in (tj.treinador).t
+	(tj.treinador).t' = (tj.treinador).t - tc
+}
+
+pred addPreparadorFisico[tr:Treino, pf:PreparadorFisico, t, t':Time] {
+	pf !in (tr.preparadorFisico).t
+	(tr.preparadorFisico).t' = (tr.preparadorFisico).t + pf
+}
+
+pred removePreparadorFisico[tr:Treino, pf:PreparadorFisico, t, t':Time] {
+	pf in (tr.preparadorFisico).t
+	(tr.preparadorFisico).t' = (tr.preparadorFisico).t - pf
+}
+
+pred addTreinadorGoleiro[tg:TreinoGoleiro, trg:TreinadorGoleiro, t, t':Time] {
+	trg !in (tg.treinadorgoleiro).t
+	(tg.treinadorgoleiro).t' = (tg.treinadorgoleiro).t + trg
+}
+
+pred removeTreinadorGoleiro[tg:TreinoGoleiro, trg:TreinadorGoleiro, t, t':Time] {
+	trg in (tg.treinadorgoleiro).t
+	(tg.treinadorgoleiro).t' = (tg.treinadorgoleiro).t - trg
+}
+	
 
 
 
